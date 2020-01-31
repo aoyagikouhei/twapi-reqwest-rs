@@ -1,8 +1,5 @@
 use reqwest::{
-    blocking::{
-        multipart::Form,
-        Response,
-    },
+    blocking::{multipart::Form, Response},
     Error,
 };
 use serde_json::Value;
@@ -28,14 +25,23 @@ pub fn get(
     raw_get(url, query_options, &authorization)
 }
 
-pub fn get_v2(url: &str, query_options: &Vec<(&str, &str)>, bearer_token: &str) -> Result<Response, Error> {
+pub fn get_v2(
+    url: &str,
+    query_options: &Vec<(&str, &str)>,
+    bearer_token: &str,
+) -> Result<Response, Error> {
     let authorization = oauth2_authorization_header(bearer_token);
     raw_get(url, query_options, &authorization)
 }
 
-fn raw_get(url: &str, query_options: &Vec<(&str, &str)>, authorization: &str) -> Result<Response, Error> {
+fn raw_get(
+    url: &str,
+    query_options: &Vec<(&str, &str)>,
+    authorization: &str,
+) -> Result<Response, Error> {
     let client = reqwest::blocking::Client::new();
-    client.get(url)
+    client
+        .get(url)
         .header("Authorization", authorization)
         .query(query_options)
         .send()
@@ -73,9 +79,13 @@ fn raw_post(
     authorization: &str,
 ) -> Result<Response, Error> {
     let client = reqwest::blocking::Client::new();
-    client.post(url)
+    client
+        .post(url)
         .header("Authorization", authorization)
-        .header("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8")
+        .header(
+            "Content-Type",
+            "application/x-www-form-urlencoded;charset=UTF-8",
+        )
         .query(query_options)
         .body(crate::make_body(form_options))
         .send()
@@ -109,7 +119,8 @@ fn raw_json(
     authorization: &str,
 ) -> Result<Response, Error> {
     let client = reqwest::blocking::Client::new();
-    client.post(url)
+    client
+        .post(url)
         .header("Authorization", authorization)
         .header("Content-Type", "application/json")
         .query(query_options)
@@ -137,9 +148,14 @@ pub fn put(
     raw_put(url, query_options, &authorization)
 }
 
-fn raw_put(url: &str, query_options: &Vec<(&str, &str)>, authorization: &str) -> Result<Response, Error> {
+fn raw_put(
+    url: &str,
+    query_options: &Vec<(&str, &str)>,
+    authorization: &str,
+) -> Result<Response, Error> {
     let client = reqwest::blocking::Client::new();
-    client.put(url)
+    client
+        .put(url)
         .header("Authorization", authorization)
         .query(query_options)
         .send()
@@ -165,9 +181,14 @@ pub fn delete(
     raw_delete(url, query_options, &authorization)
 }
 
-fn raw_delete(url: &str, query_options: &Vec<(&str, &str)>, authorization: &str) -> Result<Response, Error> {
+fn raw_delete(
+    url: &str,
+    query_options: &Vec<(&str, &str)>,
+    authorization: &str,
+) -> Result<Response, Error> {
     let client = reqwest::blocking::Client::new();
-    client.delete(url)
+    client
+        .delete(url)
         .header("Authorization", authorization)
         .query(query_options)
         .send()
@@ -201,17 +222,22 @@ fn raw_multipart(
     authorization: &str,
 ) -> Result<Response, Error> {
     let client = reqwest::blocking::Client::new();
-    client.post(url)
+    client
+        .post(url)
         .header("Authorization", authorization)
         .query(query_options)
         .multipart(data)
         .send()
 }
 
-pub fn get_bearer_token_response(consumer_key: &str, consumer_secret: &str) -> Result<Response, Error> {
+pub fn get_bearer_token_response(
+    consumer_key: &str,
+    consumer_secret: &str,
+) -> Result<Response, Error> {
     let key = base64::encode(&format!("{}:{}", consumer_key, consumer_secret));
     let client = reqwest::blocking::Client::new();
-    client.post("https://api.twitter.com/oauth2/token")
+    client
+        .post("https://api.twitter.com/oauth2/token")
         .header(
             "Content-Type",
             "application/x-www-form-urlencoded;charset=UTF-8",
@@ -224,7 +250,7 @@ pub fn get_bearer_token_response(consumer_key: &str, consumer_secret: &str) -> R
 pub fn get_bearer_token(consumer_key: &str, consumer_secret: &str) -> Option<String> {
     match get_bearer_token_response(consumer_key, consumer_secret) {
         Ok(response) => match response.json::<Value>() {
-            Ok(json) => match json["access_token"].as_str(){
+            Ok(json) => match json["access_token"].as_str() {
                 Some(access_token) => Some(access_token.to_string()),
                 None => None,
             },
@@ -237,25 +263,26 @@ pub fn get_bearer_token(consumer_key: &str, consumer_secret: &str) -> Option<Str
 #[cfg(test)]
 mod tests {
     use crate::blocking::*;
-    use std::env;
     use serde_json::Value;
+    use std::env;
 
     #[test]
     fn test_api() {
-
         let consumer_key = env::var("CONSUMER_KEY").unwrap();
         let consumer_secret = env::var("CONSUMER_SECRET").unwrap();
         let access_key = env::var("ACCESS_KEY").unwrap();
         let access_secret = env::var("ACCESS_SECRET").unwrap();
-        /*let bearer_token = get_bearer_token(&consumer_key, &consumer_secret).unwrap();
-
+        let bearer_token = get_bearer_token(&consumer_key, &consumer_secret).unwrap();
 
         // search
         let res: Value = get_v2(
             "https://api.twitter.com/1.1/search/tweets.json",
             &vec![("q", "東京&埼玉"), ("count", "2")],
             &bearer_token,
-        ).unwrap().json().unwrap();
+        )
+        .unwrap()
+        .json()
+        .unwrap();
         println!("{:?}", res);
 
         // home_timeline
@@ -268,7 +295,10 @@ mod tests {
             &consumer_secret,
             &access_key,
             &access_secret,
-        ).unwrap().json().unwrap();
+        )
+        .unwrap()
+        .json()
+        .unwrap();
         println!("{:?}", res);
 
         // statuses/update
@@ -285,7 +315,10 @@ mod tests {
             &consumer_secret,
             &access_key,
             &access_secret,
-        ).unwrap().json().unwrap();
+        )
+        .unwrap()
+        .json()
+        .unwrap();
         println!("{:?}", res);
 
         // direct_messages new
@@ -312,11 +345,16 @@ mod tests {
             &consumer_secret,
             &access_key,
             &access_secret,
-        ).unwrap().json().unwrap();
+        )
+        .unwrap()
+        .json()
+        .unwrap();
         println!("{:?}", res);
 
         // media/upload
-        let data = reqwest::blocking::multipart::Form::new().file("media", "test.jpg").unwrap();
+        let data = reqwest::blocking::multipart::Form::new()
+            .file("media", "test.jpg")
+            .unwrap();
         let url = "https://upload.twitter.com/1.1/media/upload.json";
         let res: Value = multipart(
             url,
@@ -326,8 +364,10 @@ mod tests {
             &consumer_secret,
             &access_key,
             &access_secret,
-        ).unwrap().json().unwrap();
+        )
+        .unwrap()
+        .json()
+        .unwrap();
         println!("{:?}", res);
-        */
     }
 }

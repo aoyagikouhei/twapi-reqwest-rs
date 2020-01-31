@@ -1,8 +1,4 @@
-use reqwest::{
-    Error,
-    multipart::Form,
-    Response,
-};
+use reqwest::{multipart::Form, Error, Response};
 use serde_json::Value;
 use twapi_oauth::{oauth1_authorization_header, oauth2_authorization_header};
 
@@ -28,17 +24,27 @@ pub async fn get(
     raw_get(url, query_options, &authorization).await
 }
 
-pub async fn get_v2(url: &str, query_options: &Vec<(&str, &str)>, bearer_token: &str) -> Result<Response, Error> {
+pub async fn get_v2(
+    url: &str,
+    query_options: &Vec<(&str, &str)>,
+    bearer_token: &str,
+) -> Result<Response, Error> {
     let authorization = oauth2_authorization_header(bearer_token);
     raw_get(url, query_options, &authorization).await
 }
 
-async fn raw_get(url: &str, query_options: &Vec<(&str, &str)>, authorization: &str) -> Result<Response, Error> {
+async fn raw_get(
+    url: &str,
+    query_options: &Vec<(&str, &str)>,
+    authorization: &str,
+) -> Result<Response, Error> {
     let client = reqwest::Client::new();
-    client.get(url)
+    client
+        .get(url)
         .header("Authorization", authorization)
         .query(query_options)
-        .send().await
+        .send()
+        .await
 }
 
 pub async fn post(
@@ -73,12 +79,17 @@ async fn raw_post(
     authorization: &str,
 ) -> Result<Response, Error> {
     let client = reqwest::Client::new();
-    client.post(url)
+    client
+        .post(url)
         .header("Authorization", authorization)
-        .header("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8")
+        .header(
+            "Content-Type",
+            "application/x-www-form-urlencoded;charset=UTF-8",
+        )
         .query(query_options)
         .body(make_body(form_options))
-        .send().await
+        .send()
+        .await
 }
 
 pub async fn json(
@@ -109,12 +120,14 @@ async fn raw_json(
     authorization: &str,
 ) -> Result<Response, Error> {
     let client = reqwest::Client::new();
-    client.post(url)
+    client
+        .post(url)
         .header("Authorization", authorization)
         .header("Content-Type", "application/json")
         .query(query_options)
         .json(&data)
-        .send().await
+        .send()
+        .await
 }
 
 pub async fn put(
@@ -137,12 +150,18 @@ pub async fn put(
     raw_put(url, query_options, &authorization).await
 }
 
-async fn raw_put(url: &str, query_options: &Vec<(&str, &str)>, authorization: &str) -> Result<Response, Error> {
+async fn raw_put(
+    url: &str,
+    query_options: &Vec<(&str, &str)>,
+    authorization: &str,
+) -> Result<Response, Error> {
     let client = reqwest::Client::new();
-    client.put(url)
+    client
+        .put(url)
         .header("Authorization", authorization)
         .query(query_options)
-        .send().await
+        .send()
+        .await
 }
 
 pub async fn delete(
@@ -165,12 +184,18 @@ pub async fn delete(
     raw_delete(url, query_options, &authorization).await
 }
 
-async fn raw_delete(url: &str, query_options: &Vec<(&str, &str)>, authorization: &str) -> Result<Response, Error> {
+async fn raw_delete(
+    url: &str,
+    query_options: &Vec<(&str, &str)>,
+    authorization: &str,
+) -> Result<Response, Error> {
     let client = reqwest::Client::new();
-    client.delete(url)
+    client
+        .delete(url)
         .header("Authorization", authorization)
         .query(query_options)
-        .send().await
+        .send()
+        .await
 }
 
 pub async fn multipart(
@@ -201,30 +226,37 @@ async fn raw_multipart(
     authorization: &str,
 ) -> Result<Response, Error> {
     let client = reqwest::Client::new();
-    client.post(url)
+    client
+        .post(url)
         .header("Authorization", authorization)
         .query(query_options)
         .multipart(data)
-        .send().await
+        .send()
+        .await
 }
 
-pub async fn get_bearer_token_response(consumer_key: &str, consumer_secret: &str) -> Result<Response, Error> {
+pub async fn get_bearer_token_response(
+    consumer_key: &str,
+    consumer_secret: &str,
+) -> Result<Response, Error> {
     let key = base64::encode(&format!("{}:{}", consumer_key, consumer_secret));
     let client = reqwest::Client::new();
-    client.post("https://api.twitter.com/oauth2/token")
+    client
+        .post("https://api.twitter.com/oauth2/token")
         .header(
             "Content-Type",
             "application/x-www-form-urlencoded;charset=UTF-8",
         )
         .header("Authorization", &format!("Basic {}", key))
         .body("grant_type=client_credentials")
-        .send().await
+        .send()
+        .await
 }
 
 pub async fn get_bearer_token(consumer_key: &str, consumer_secret: &str) -> Option<String> {
     match get_bearer_token_response(consumer_key, consumer_secret).await {
         Ok(response) => match response.json::<Value>().await {
-            Ok(json) => match json["access_token"].as_str(){
+            Ok(json) => match json["access_token"].as_str() {
                 Some(access_token) => Some(access_token.to_string()),
                 None => None,
             },
@@ -248,8 +280,8 @@ pub(crate) fn make_body(form_options: &Vec<(&str, &str)>) -> String {
 #[cfg(test)]
 mod tests {
     use crate::*;
-    use std::env;
     use serde_json::Value;
+    use std::env;
     use std::io::{BufReader, Cursor, Read};
 
     #[tokio::test]
@@ -258,14 +290,21 @@ mod tests {
         let consumer_secret = env::var("CONSUMER_SECRET").unwrap();
         let access_key = env::var("ACCESS_KEY").unwrap();
         let access_secret = env::var("ACCESS_SECRET").unwrap();
-        /*let bearer_token = get_bearer_token(&consumer_key, &consumer_secret).await.unwrap();
+        let bearer_token = get_bearer_token(&consumer_key, &consumer_secret)
+            .await
+            .unwrap();
 
         // search
         let res: Value = get_v2(
             "https://api.twitter.com/1.1/search/tweets.json",
             &vec![("q", "東京&埼玉"), ("count", "2")],
             &bearer_token,
-        ).await.unwrap().json().await.unwrap();
+        )
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
         println!("{:?}", res);
 
         // home_timeline
@@ -278,7 +317,12 @@ mod tests {
             &consumer_secret,
             &access_key,
             &access_secret,
-        ).await.unwrap().json().await.unwrap();
+        )
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
         println!("{:?}", res);
 
         // statuses/update
@@ -295,7 +339,12 @@ mod tests {
             &consumer_secret,
             &access_key,
             &access_secret,
-        ).await.unwrap().json().await.unwrap();
+        )
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
         println!("{:?}", res);
 
         // direct_messages new
@@ -322,9 +371,13 @@ mod tests {
             &consumer_secret,
             &access_key,
             &access_secret,
-        ).await.unwrap().json().await.unwrap();
+        )
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
         println!("{:?}", res);
-        */
 
         // media/upload
         let metadata = std::fs::metadata("test.jpg").unwrap();
@@ -345,7 +398,12 @@ mod tests {
             &consumer_secret,
             &access_key,
             &access_secret,
-        ).await.unwrap().json().await.unwrap();
+        )
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
         println!("{:?}", res);
     }
 }
