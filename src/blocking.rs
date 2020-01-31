@@ -1,6 +1,9 @@
 use reqwest::{
+    blocking::{
+        multipart::Form,
+        Response,
+    },
     Error,
-    blocking::Response
 };
 use serde_json::Value;
 use twapi_oauth::{oauth1_authorization_header, oauth2_authorization_header};
@@ -170,6 +173,41 @@ fn raw_delete(url: &str, query_options: &Vec<(&str, &str)>, authorization: &str)
         .send()
 }
 
+pub fn multipart(
+    url: &str,
+    query_options: &Vec<(&str, &str)>,
+    data: Form,
+    consumer_key: &str,
+    consumer_secret: &str,
+    access_key: &str,
+    access_secret: &str,
+) -> Result<Response, Error> {
+    let authorization = oauth1_authorization_header(
+        consumer_key,
+        consumer_secret,
+        access_key,
+        access_secret,
+        "POST",
+        url,
+        &query_options,
+    );
+    raw_multipart(url, query_options, data, &authorization)
+}
+
+fn raw_multipart(
+    url: &str,
+    query_options: &Vec<(&str, &str)>,
+    data: Form,
+    authorization: &str,
+) -> Result<Response, Error> {
+    let client = reqwest::blocking::Client::new();
+    client.post(url)
+        .header("Authorization", authorization)
+        .query(query_options)
+        .multipart(data)
+        .send()
+}
+
 pub fn get_bearer_token_response(consumer_key: &str, consumer_secret: &str) -> Result<Response, Error> {
     let key = base64::encode(&format!("{}:{}", consumer_key, consumer_secret));
     let client = reqwest::blocking::Client::new();
@@ -200,7 +238,6 @@ pub fn get_bearer_token(consumer_key: &str, consumer_secret: &str) -> Option<Str
 mod tests {
     use crate::blocking::*;
     use std::env;
-    use std::io::{BufReader, Cursor, Read};
     use serde_json::Value;
 
     #[test]
@@ -268,6 +305,20 @@ mod tests {
                 }"#;
         let data: Value = serde_json::from_str(data).unwrap();
         let res: Value = json(
+            url,
+            &vec![],
+            data,
+            &consumer_key,
+            &consumer_secret,
+            &access_key,
+            &access_secret,
+        ).unwrap().json().unwrap();
+        println!("{:?}", res);
+
+        // media/upload
+        let data = reqwest::blocking::multipart::Form::new().file("media", "test.jpg").unwrap();
+        let url = "https://upload.twitter.com/1.1/media/upload.json";
+        let res: Value = multipart(
             url,
             &vec![],
             data,

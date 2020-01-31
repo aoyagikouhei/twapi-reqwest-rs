@@ -1,5 +1,6 @@
 use reqwest::{
     Error,
+    multipart::Form,
     Response,
 };
 use serde_json::Value;
@@ -172,6 +173,41 @@ async fn raw_delete(url: &str, query_options: &Vec<(&str, &str)>, authorization:
         .send().await
 }
 
+pub async fn multipart(
+    url: &str,
+    query_options: &Vec<(&str, &str)>,
+    data: Form,
+    consumer_key: &str,
+    consumer_secret: &str,
+    access_key: &str,
+    access_secret: &str,
+) -> Result<Response, Error> {
+    let authorization = oauth1_authorization_header(
+        consumer_key,
+        consumer_secret,
+        access_key,
+        access_secret,
+        "POST",
+        url,
+        &query_options,
+    );
+    raw_multipart(url, query_options, data, &authorization).await
+}
+
+async fn raw_multipart(
+    url: &str,
+    query_options: &Vec<(&str, &str)>,
+    data: Form,
+    authorization: &str,
+) -> Result<Response, Error> {
+    let client = reqwest::Client::new();
+    client.post(url)
+        .header("Authorization", authorization)
+        .query(query_options)
+        .multipart(data)
+        .send().await
+}
+
 pub async fn get_bearer_token_response(consumer_key: &str, consumer_secret: &str) -> Result<Response, Error> {
     let key = base64::encode(&format!("{}:{}", consumer_key, consumer_secret));
     let client = reqwest::Client::new();
@@ -213,8 +249,8 @@ pub(crate) fn make_body(form_options: &Vec<(&str, &str)>) -> String {
 mod tests {
     use crate::*;
     use std::env;
-    use std::io::{BufReader, Cursor, Read};
     use serde_json::Value;
+    use std::io::{BufReader, Cursor, Read};
 
     #[tokio::test]
     async fn test_api() {
@@ -289,5 +325,27 @@ mod tests {
         ).await.unwrap().json().await.unwrap();
         println!("{:?}", res);
         */
+
+        // media/upload
+        let metadata = std::fs::metadata("test.jpg").unwrap();
+        let file_size = metadata.len();
+        let f = std::fs::File::open("test.jpg").unwrap();
+        let mut cursor = Cursor::new(vec![0; file_size as usize]);
+        let mut reader = BufReader::new(f);
+        reader.read(cursor.get_mut()).unwrap();
+
+        let part = reqwest::multipart::Part::bytes(cursor.into_inner());
+        let data = reqwest::multipart::Form::new().part("media", part);
+        let url = "https://upload.twitter.com/1.1/media/upload.json";
+        let res: Value = multipart(
+            url,
+            &vec![],
+            data,
+            &consumer_key,
+            &consumer_secret,
+            &access_key,
+            &access_secret,
+        ).await.unwrap().json().await.unwrap();
+        println!("{:?}", res);
     }
 }
