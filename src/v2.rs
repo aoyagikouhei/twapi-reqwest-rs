@@ -13,7 +13,7 @@ pub async fn get(
     crate::raw::get(url, query_options, &authorization).await
 }
 
-#[cfg(testx)]
+#[cfg(test)]
 mod tests {
     use crate::*;
     use serde_json::Value;
