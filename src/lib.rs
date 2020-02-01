@@ -3,6 +3,8 @@ pub(crate) mod raw;
 pub mod v1;
 pub mod v2;
 
+pub use reqwest;
+
 pub(crate) fn make_body(form_options: &Vec<(&str, &str)>) -> String {
     match serde_urlencoded::to_string(form_options) {
         Ok(body) => body

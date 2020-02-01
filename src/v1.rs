@@ -1,10 +1,6 @@
-use reqwest::{
-    Error,
-    multipart::Form,
-    Response,
-};
+use reqwest::{multipart::Form, Error, Response};
 use serde_json::Value;
-use twapi_oauth::{oauth1_authorization_header};
+use twapi_oauth::oauth1_authorization_header;
 
 pub async fn get(
     url: &str,
@@ -54,7 +50,7 @@ pub async fn post(
 pub async fn json(
     url: &str,
     query_options: &Vec<(&str, &str)>,
-    data: Value,
+    data: &Value,
     consumer_key: &str,
     consumer_secret: &str,
     access_key: &str,

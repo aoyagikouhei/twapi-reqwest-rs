@@ -1,9 +1,6 @@
-use reqwest::{
-    Client,
-    Error,
-    Response,
-};
+use reqwest::{Client, Error, Response};
 use serde_json::Value;
+use std::collections::HashMap;
 use twapi_oauth::calc_oauth_header;
 
 pub async fn get_bearer_token_response(
@@ -24,16 +21,17 @@ pub async fn get_bearer_token_response(
         .await
 }
 
-pub async fn get_bearer_token(consumer_key: &str, consumer_secret: &str) -> Option<String> {
-    match get_bearer_token_response(consumer_key, consumer_secret).await {
-        Ok(response) => match response.json::<Value>().await {
-            Ok(json) => match json["access_token"].as_str() {
-                Some(access_token) => Some(access_token.to_string()),
-                None => None,
-            },
-            Err(_) => None,
-        },
-        Err(_) => None,
+pub async fn get_bearer_token(
+    consumer_key: &str,
+    consumer_secret: &str,
+) -> Result<Option<String>, Error> {
+    let json: Value = get_bearer_token_response(consumer_key, consumer_secret)
+        .await?
+        .json()
+        .await?;
+    match json["access_token"].as_str() {
+        Some(access_token) => Ok(Some(access_token.to_string())),
+        None => Ok(None),
     }
 }
 
@@ -69,11 +67,15 @@ pub async fn request_token(
     consumer_secret: &str,
     oauth_callback: &str,
     x_auth_access_type: Option<&str>,
-) -> Option<Vec<(String, String)>> {
-    match request_token_response(consumer_key, consumer_secret, oauth_callback, x_auth_access_type).await {
-        Ok(response) => parse_oauth_body(response).await,
-        Err(_) => None,
-    }
+) -> Result<HashMap<String, String>, Error> {
+    let response = request_token_response(
+        consumer_key,
+        consumer_secret,
+        oauth_callback,
+        x_auth_access_type,
+    )
+    .await?;
+    Ok(parse_oauth_body(response).await)
 }
 
 pub async fn access_token_response(
@@ -109,21 +111,31 @@ pub async fn access_token(
     oauth_token: &str,
     oauth_token_secret: &str,
     oauth_verifier: &str,
-) -> Option<Vec<(String, String)>> {
-    match access_token_response(consumer_key, consumer_secret, oauth_token, oauth_token_secret, oauth_verifier).await {
-        Ok(response) => parse_oauth_body(response).await,
-        Err(_) => None,
-    }
+) -> Result<HashMap<String, String>, Error> {
+    let response = access_token_response(
+        consumer_key,
+        consumer_secret,
+        oauth_token,
+        oauth_token_secret,
+        oauth_verifier,
+    )
+    .await?;
+    Ok(parse_oauth_body(response).await)
 }
 
-async fn parse_oauth_body(response: Response) -> Option<Vec<(String, String)>> {
+async fn parse_oauth_body(response: Response) -> HashMap<String, String> {
+    let mut result = HashMap::new();
     match response.text().await {
         Ok(body) => {
-            Some(body.split("&").map(|it| {
-                let mut pair = it.split("=");
-                (pair.next().unwrap().to_string(), pair.next().unwrap().to_string())
-            }).collect())
-        },
-        Err(_) => None,
+            for item in body.split("&") {
+                let mut pair = item.split("=");
+                result.insert(
+                    pair.next().unwrap().to_string(),
+                    pair.next().unwrap().to_string(),
+                );
+            }
+        }
+        Err(_) => {}
     }
+    result
 }

@@ -1,9 +1,4 @@
-use reqwest::{
-    Client,
-    Error,
-    multipart::Form,
-    Response,
-};
+use reqwest::{multipart::Form, Client, Error, Response};
 use serde_json::Value;
 
 pub(crate) async fn get(
@@ -43,7 +38,7 @@ pub(crate) async fn post(
 pub(crate) async fn json(
     url: &str,
     query_options: &Vec<(&str, &str)>,
-    data: Value,
+    data: &Value,
     authorization: &str,
 ) -> Result<Response, Error> {
     let client = Client::new();

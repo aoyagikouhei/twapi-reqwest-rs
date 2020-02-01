@@ -1,8 +1,6 @@
-use reqwest::{
-    Error,
-    Response,
-};
-use twapi_oauth::{oauth2_authorization_header};
+use reqwest::{multipart::Form, Error, Response};
+use serde_json::Value;
+use twapi_oauth::oauth2_authorization_header;
 
 pub async fn get(
     url: &str,
@@ -11,6 +9,54 @@ pub async fn get(
 ) -> Result<Response, Error> {
     let authorization = oauth2_authorization_header(bearer_token);
     crate::raw::get(url, query_options, &authorization).await
+}
+
+pub async fn post(
+    url: &str,
+    query_options: &Vec<(&str, &str)>,
+    form_options: &Vec<(&str, &str)>,
+    bearer_token: &str,
+) -> Result<Response, Error> {
+    let authorization = oauth2_authorization_header(bearer_token);
+    crate::raw::post(url, query_options, form_options, &authorization).await
+}
+
+pub async fn json(
+    url: &str,
+    query_options: &Vec<(&str, &str)>,
+    data: &Value,
+    bearer_token: &str,
+) -> Result<Response, Error> {
+    let authorization = oauth2_authorization_header(bearer_token);
+    crate::raw::json(url, query_options, data, &authorization).await
+}
+
+pub async fn put(
+    url: &str,
+    query_options: &Vec<(&str, &str)>,
+    bearer_token: &str,
+) -> Result<Response, Error> {
+    let authorization = oauth2_authorization_header(bearer_token);
+    crate::raw::put(url, query_options, &authorization).await
+}
+
+pub async fn delete(
+    url: &str,
+    query_options: &Vec<(&str, &str)>,
+    bearer_token: &str,
+) -> Result<Response, Error> {
+    let authorization = oauth2_authorization_header(bearer_token);
+    crate::raw::delete(url, query_options, &authorization).await
+}
+
+pub async fn multipart(
+    url: &str,
+    query_options: &Vec<(&str, &str)>,
+    data: Form,
+    bearer_token: &str,
+) -> Result<Response, Error> {
+    let authorization = oauth2_authorization_header(bearer_token);
+    crate::raw::multipart(url, query_options, data, &authorization).await
 }
 
 #[cfg(test)]
