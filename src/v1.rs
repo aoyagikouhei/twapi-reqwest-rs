@@ -143,6 +143,24 @@ mod tests {
         let access_key = env::var("ACCESS_KEY").unwrap();
         let access_secret = env::var("ACCESS_SECRET").unwrap();
 
+        // search
+        let url = "https://api.twitter.com/1.1/search/tweets.json";
+        let query_options = vec![("q", "*abc"), ("count", "2")];
+        let res: Value = v1::get(
+            url,
+            &query_options,
+            &consumer_key,
+            &consumer_secret,
+            &access_key,
+            &access_secret,
+        )
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+        println!("{:?}", res);
+
         // home_timeline
         let url = "https://api.twitter.com/1.1/statuses/home_timeline.json";
         let query_options = vec![("count", "2")];
@@ -182,7 +200,7 @@ mod tests {
         .await
         .unwrap();
         println!("{:?}", res);
-
+/*
         // direct_messages new
         let url = "https://api.twitter.com/1.1/direct_messages/events/new.json";
         let data = r#"{
@@ -202,7 +220,7 @@ mod tests {
         let res: Value = v1::json(
             url,
             &vec![],
-            data,
+            &data,
             &consumer_key,
             &consumer_secret,
             &access_key,
@@ -241,5 +259,6 @@ mod tests {
         .await
         .unwrap();
         println!("{:?}", res);
+    */
     }
 }

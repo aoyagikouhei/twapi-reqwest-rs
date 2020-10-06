@@ -71,12 +71,13 @@ mod tests {
         let consumer_secret = env::var("CONSUMER_SECRET").unwrap();
         let bearer_token = oauth::get_bearer_token(&consumer_key, &consumer_secret)
             .await
+            .unwrap()
             .unwrap();
 
         // search
         let res: Value = v2::get(
             "https://api.twitter.com/1.1/search/tweets.json",
-            &vec![("q", "東京&埼玉"), ("count", "2")],
+            &vec![("q", "*abc"), ("count", "2")],
             &bearer_token,
         )
         .await
