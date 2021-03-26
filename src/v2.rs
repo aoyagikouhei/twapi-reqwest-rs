@@ -2,13 +2,95 @@ use reqwest::{multipart::Form, Error, Response};
 use serde_json::Value;
 use twapi_oauth::oauth2_authorization_header;
 
+pub struct Client {
+    bearer_token: String,
+}
+
+impl Client {
+    pub fn new(bearer_token: &str) -> Self {
+        Self { bearer_token: bearer_token.to_owned() }
+    }
+
+    pub async fn new_from_key(consumer_key: &str, consumer_secret: &str) -> Result<Option<Self>, Error> {
+        Ok(crate::oauth::get_bearer_token(&consumer_key, &consumer_secret).await?
+            .map(|bearer_token| Self::new(&bearer_token)))
+    }
+
+    pub async fn new_by_env() -> Result<Option<Self>, Error> {
+        let consumer_key = match std::env::var("CONSUMER_KEY") {
+            Ok(consumer_key) => consumer_key,
+            Err(_) => return Ok(None),
+        };
+        let consumer_secret = match std::env::var("CONSUMER_SECRET") {
+            Ok(consumer_key) => consumer_key,
+            Err(_) => return Ok(None),
+        };
+        Self::new_from_key(&consumer_key, &consumer_secret).await
+    }
+
+    fn make_header(&self) -> String {
+        oauth2_authorization_header(&self.bearer_token)
+    }
+
+    pub async fn get(
+        &self,
+        url: &str,
+        query_options: &Vec<(&str, &str)>,
+    ) -> Result<Response, Error> {
+        crate::raw::get(url, query_options, &self.make_header()).await
+    }
+
+    pub async fn post(
+        &self,
+        url: &str,
+        query_options: &Vec<(&str, &str)>,
+        form_options: &Vec<(&str, &str)>,
+    ) -> Result<Response, Error> {
+        crate::raw::post(url, query_options, form_options, &self.make_header()).await
+    }
+
+    pub async fn json(
+        &self,
+        url: &str,
+        query_options: &Vec<(&str, &str)>,
+        data: &Value,
+    ) -> Result<Response, Error> {
+        crate::raw::json(url, query_options, data, &self.make_header()).await
+    }
+
+    pub async fn put(
+        &self,
+        url: &str,
+        query_options: &Vec<(&str, &str)>,
+    ) -> Result<Response, Error> {
+        crate::raw::put(url, query_options, &self.make_header()).await
+    }
+
+    pub async fn delete(
+        &self,
+        url: &str,
+        query_options: &Vec<(&str, &str)>,
+    ) -> Result<Response, Error> {
+        crate::raw::delete(url, query_options, &self.make_header()).await
+    }
+
+    pub async fn multipart(
+        &self,
+        url: &str,
+        query_options: &Vec<(&str, &str)>,
+        data: Form,
+    ) -> Result<Response, Error> {
+        crate::raw::multipart(url, query_options, data, &self.make_header()).await
+    }
+}
+
 pub async fn get(
     url: &str,
     query_options: &Vec<(&str, &str)>,
     bearer_token: &str,
 ) -> Result<Response, Error> {
-    let authorization = oauth2_authorization_header(bearer_token);
-    crate::raw::get(url, query_options, &authorization).await
+    let client = Client::new(bearer_token);
+    client.get(url, query_options).await
 }
 
 pub async fn post(
@@ -17,8 +99,8 @@ pub async fn post(
     form_options: &Vec<(&str, &str)>,
     bearer_token: &str,
 ) -> Result<Response, Error> {
-    let authorization = oauth2_authorization_header(bearer_token);
-    crate::raw::post(url, query_options, form_options, &authorization).await
+    let client = Client::new(bearer_token);
+    client.post(url, query_options, form_options).await
 }
 
 pub async fn json(
@@ -27,8 +109,8 @@ pub async fn json(
     data: &Value,
     bearer_token: &str,
 ) -> Result<Response, Error> {
-    let authorization = oauth2_authorization_header(bearer_token);
-    crate::raw::json(url, query_options, data, &authorization).await
+    let client = Client::new(bearer_token);
+    client.json(url, query_options, data).await
 }
 
 pub async fn put(
@@ -36,8 +118,8 @@ pub async fn put(
     query_options: &Vec<(&str, &str)>,
     bearer_token: &str,
 ) -> Result<Response, Error> {
-    let authorization = oauth2_authorization_header(bearer_token);
-    crate::raw::put(url, query_options, &authorization).await
+    let client = Client::new(bearer_token);
+    client.put(url, query_options).await
 }
 
 pub async fn delete(
@@ -45,8 +127,8 @@ pub async fn delete(
     query_options: &Vec<(&str, &str)>,
     bearer_token: &str,
 ) -> Result<Response, Error> {
-    let authorization = oauth2_authorization_header(bearer_token);
-    crate::raw::delete(url, query_options, &authorization).await
+    let client = Client::new(bearer_token);
+    client.delete(url, query_options).await
 }
 
 pub async fn multipart(
@@ -55,8 +137,8 @@ pub async fn multipart(
     data: Form,
     bearer_token: &str,
 ) -> Result<Response, Error> {
-    let authorization = oauth2_authorization_header(bearer_token);
-    crate::raw::multipart(url, query_options, data, &authorization).await
+    let client = Client::new(bearer_token);
+    client.multipart(url, query_options, data).await
 }
 
 #[cfg(test)]

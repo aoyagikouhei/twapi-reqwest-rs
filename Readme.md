@@ -13,6 +13,12 @@ Twitter OAuth library used by reqwest.
 - JSON support(ex. dm_event, welcome_message, media_metadata, etc.)
 - Multipart support(ex. post_media_upload)
 
+## Changes
+
+### v0.2.0 (2021/03/26)
+* updated reqwest 0.11
+* add struct Client
+
 ## Example
 ```rust
 use twapi_reqwest::*;

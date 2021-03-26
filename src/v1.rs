@@ -2,6 +2,135 @@ use reqwest::{multipart::Form, Error, Response};
 use serde_json::Value;
 use twapi_oauth::oauth1_authorization_header;
 
+pub struct Client {
+    consumer_key: String,
+    consumer_secret: String,
+    access_key: String,
+    access_secret: String,
+}
+
+impl Client {
+    pub fn new(
+        consumer_key: &str,
+        consumer_secret: &str,
+        access_key: &str,
+        access_secret: &str,
+    ) -> Self {
+        Self {
+            consumer_key: consumer_key.to_owned(),
+            consumer_secret: consumer_secret.to_owned(),
+            access_key: access_key.to_owned(),
+            access_secret: access_secret.to_owned(),
+        }
+    }
+
+    pub fn new_by_env() -> Result<Self, std::env::VarError> {
+        Ok(Self {
+            consumer_key: std::env::var("CONSUMER_KEY")?,
+            consumer_secret: std::env::var("CONSUMER_SECRET")?,
+            access_key: std::env::var("ACCESS_KEY")?,
+            access_secret: std::env::var("ACCESS_SECRET")?,
+        })
+    }
+
+    fn calc_oauth(&self, method: &str, url: &str, query_options: &Vec<(&str, &str)>) -> String {
+        oauth1_authorization_header(
+            &self.consumer_key,
+            &self.consumer_secret,
+            &self.access_key,
+            &self.access_secret,
+            method,
+            url,
+            &query_options,
+        )
+    }
+
+    pub async fn get(
+        &self,
+        url: &str,
+        query_options: &Vec<(&str, &str)>,
+    ) -> Result<Response, Error> {
+        let authorization = self.calc_oauth(
+            "GET",
+            url,
+            &query_options,
+        );
+        crate::raw::get(url, query_options, &authorization).await
+    }
+
+    pub async fn post(
+        &self,
+        url: &str,
+        query_options: &Vec<(&str, &str)>,
+        form_options: &Vec<(&str, &str)>,
+    ) -> Result<Response, Error> {
+        let mut merged_options = query_options.clone();
+        for option in form_options {
+            merged_options.push(*option);
+        }
+        let authorization = self.calc_oauth(
+            "POST",
+            url,
+            &merged_options,
+        );
+        crate::raw::post(url, query_options, form_options, &authorization).await
+    }
+
+    pub async fn json(
+        &self,
+        url: &str,
+        query_options: &Vec<(&str, &str)>,
+        data: &Value,
+    ) -> Result<Response, Error> {
+        let authorization = self.calc_oauth(
+            "POST",
+            url,
+            &query_options,
+        );
+        crate::raw::json(url, query_options, data, &authorization).await
+    }
+
+    pub async fn put(
+        &self,
+        url: &str,
+        query_options: &Vec<(&str, &str)>,
+    ) -> Result<Response, Error> {
+        let authorization = self.calc_oauth(
+            "PUT",
+            url,
+            &query_options,
+        );
+        crate::raw::put(url, query_options, &authorization).await
+    }
+
+    pub async fn delete(
+        &self,
+        url: &str,
+        query_options: &Vec<(&str, &str)>,
+    ) -> Result<Response, Error> {
+        let authorization = self.calc_oauth(
+            "DELETE",
+            url,
+            &query_options,
+        );
+        crate::raw::delete(url, query_options, &authorization).await
+    }
+
+    pub async fn multipart(
+        &self,
+        url: &str,
+        query_options: &Vec<(&str, &str)>,
+        data: Form,
+    ) -> Result<Response, Error> {
+        let authorization = self.calc_oauth(
+            "POST",
+            url,
+            &query_options,
+        );
+        crate::raw::multipart(url, query_options, data, &authorization).await
+    }
+}
+
 pub async fn get(
     url: &str,
     query_options: &Vec<(&str, &str)>,
@@ -10,16 +139,8 @@ pub async fn get(
     access_key: &str,
     access_secret: &str,
 ) -> Result<Response, Error> {
-    let authorization = oauth1_authorization_header(
-        consumer_key,
-        consumer_secret,
-        access_key,
-        access_secret,
-        "GET",
-        url,
-        &query_options,
-    );
-    crate::raw::get(url, query_options, &authorization).await
+    let client = Client::new(consumer_key, consumer_secret, access_key, access_secret);
+    client.get(url, query_options).await
 }
 
 pub async fn post(
@@ -31,20 +152,8 @@ pub async fn post(
     access_key: &str,
     access_secret: &str,
 ) -> Result<Response, Error> {
-    let mut merged_options = query_options.clone();
-    for option in form_options {
-        merged_options.push(*option);
-    }
-    let authorization = oauth1_authorization_header(
-        consumer_key,
-        consumer_secret,
-        access_key,
-        access_secret,
-        "POST",
-        url,
-        &merged_options,
-    );
-    crate::raw::post(url, query_options, form_options, &authorization).await
+    let client = Client::new(consumer_key, consumer_secret, access_key, access_secret);
+    client.post(url, query_options, form_options).await
 }
 
 pub async fn json(
@@ -56,16 +165,8 @@ pub async fn json(
     access_key: &str,
     access_secret: &str,
 ) -> Result<Response, Error> {
-    let authorization = oauth1_authorization_header(
-        consumer_key,
-        consumer_secret,
-        access_key,
-        access_secret,
-        "POST",
-        url,
-        &query_options,
-    );
-    crate::raw::json(url, query_options, data, &authorization).await
+    let client = Client::new(consumer_key, consumer_secret, access_key, access_secret);
+    client.json(url, query_options, data).await
 }
 
 pub async fn put(
@@ -76,16 +177,8 @@ pub async fn put(
     access_key: &str,
     access_secret: &str,
 ) -> Result<Response, Error> {
-    let authorization = oauth1_authorization_header(
-        consumer_key,
-        consumer_secret,
-        access_key,
-        access_secret,
-        "PUT",
-        url,
-        &query_options,
-    );
-    crate::raw::put(url, query_options, &authorization).await
+    let client = Client::new(consumer_key, consumer_secret, access_key, access_secret);
+    client.put(url, query_options).await
 }
 
 pub async fn delete(
@@ -96,16 +189,8 @@ pub async fn delete(
     access_key: &str,
     access_secret: &str,
 ) -> Result<Response, Error> {
-    let authorization = oauth1_authorization_header(
-        consumer_key,
-        consumer_secret,
-        access_key,
-        access_secret,
-        "DELETE",
-        url,
-        &query_options,
-    );
-    crate::raw::delete(url, query_options, &authorization).await
+    let client = Client::new(consumer_key, consumer_secret, access_key, access_secret);
+    client.delete(url, query_options).await
 }
 
 pub async fn multipart(
@@ -117,16 +202,8 @@ pub async fn multipart(
     access_key: &str,
     access_secret: &str,
 ) -> Result<Response, Error> {
-    let authorization = oauth1_authorization_header(
-        consumer_key,
-        consumer_secret,
-        access_key,
-        access_secret,
-        "POST",
-        url,
-        &query_options,
-    );
-    crate::raw::multipart(url, query_options, data, &authorization).await
+    let client = Client::new(consumer_key, consumer_secret, access_key, access_secret);
+    client.multipart(url, query_options, data).await
 }
 
 #[cfg(test)]
