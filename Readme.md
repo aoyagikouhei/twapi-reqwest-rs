@@ -15,6 +15,9 @@ Twitter OAuth library used by reqwest.
 
 ## Changes
 
+### v0.2.1 (2021/09/14)
+* oauth parse_oauth_body add original body to HashMap
+
 ### v0.2.0 (2021/03/26)
 * updated reqwest 0.11
 * add struct Client

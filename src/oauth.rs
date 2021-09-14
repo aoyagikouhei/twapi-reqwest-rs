@@ -127,12 +127,12 @@ async fn parse_oauth_body(response: Response) -> HashMap<String, String> {
     let mut result = HashMap::new();
     match response.text().await {
         Ok(body) => {
+            result.insert("twapi_request_body".to_owned(), body.clone());
             for item in body.split("&") {
                 let mut pair = item.split("=");
-                result.insert(
-                    pair.next().unwrap().to_string(),
-                    pair.next().unwrap().to_string(),
-                );
+                if let Some(key) = pair.next() {
+                    result.insert(key.to_owned(), pair.next().unwrap_or("").to_owned());
+                }
             }
         }
         Err(_) => {}

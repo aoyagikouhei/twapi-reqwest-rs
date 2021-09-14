@@ -8,12 +8,20 @@ pub struct Client {
 
 impl Client {
     pub fn new(bearer_token: &str) -> Self {
-        Self { bearer_token: bearer_token.to_owned() }
+        Self {
+            bearer_token: bearer_token.to_owned(),
+        }
     }
 
-    pub async fn new_from_key(consumer_key: &str, consumer_secret: &str) -> Result<Option<Self>, Error> {
-        Ok(crate::oauth::get_bearer_token(&consumer_key, &consumer_secret).await?
-            .map(|bearer_token| Self::new(&bearer_token)))
+    pub async fn new_from_key(
+        consumer_key: &str,
+        consumer_secret: &str,
+    ) -> Result<Option<Self>, Error> {
+        Ok(
+            crate::oauth::get_bearer_token(&consumer_key, &consumer_secret)
+                .await?
+                .map(|bearer_token| Self::new(&bearer_token)),
+        )
     }
 
     pub async fn new_by_env() -> Result<Option<Self>, Error> {
