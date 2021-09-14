@@ -15,6 +15,9 @@ Twitter OAuth library used by reqwest.
 
 ## Changes
 
+### v0.2.2 (2021/09/14)
+* oauth parse_oauth_body check response is_success
+
 ### v0.2.1 (2021/09/14)
 * oauth parse_oauth_body add original body to HashMap
 

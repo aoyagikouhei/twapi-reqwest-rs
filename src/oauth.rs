@@ -124,15 +124,23 @@ pub async fn access_token(
 }
 
 async fn parse_oauth_body(response: Response) -> HashMap<String, String> {
+    let status = response.status();
     let mut result = HashMap::new();
     match response.text().await {
         Ok(body) => {
-            result.insert("twapi_request_body".to_owned(), body.clone());
-            for item in body.split("&") {
-                let mut pair = item.split("=");
-                if let Some(key) = pair.next() {
-                    result.insert(key.to_owned(), pair.next().unwrap_or("").to_owned());
+            if status.is_success() {
+                for item in body.split("&") {
+                    let mut pair = item.split("=");
+                    if let Some(key) = pair.next() {
+                        result.insert(key.to_owned(), pair.next().unwrap_or("").to_owned());
+                    }
                 }
+            } else {
+                result.insert("twapi_request_body".to_owned(), body.clone());
+                result.insert(
+                    "twapi_request_status_code".to_owned(),
+                    status.as_str().to_owned(),
+                );
             }
         }
         Err(_) => {}
