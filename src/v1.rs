@@ -187,7 +187,6 @@ mod tests {
     use crate::*;
     use serde_json::Value;
     use std::env;
-    use std::io::{BufReader, Cursor, Read};
 
     #[tokio::test]
     async fn test_api() {
@@ -233,6 +232,7 @@ mod tests {
         println!("{:?}", res);
 
         // statuses/update
+        /*
         let url = "https://api.twitter.com/1.1/statuses/update.json";
         let form_options = vec![
             ("status", "!\"'#$%&\\()+,/:;<=>?@[\\]^`{|}~;-._* 全部"),
@@ -253,6 +253,7 @@ mod tests {
         .await
         .unwrap();
         println!("{:?}", res);
+         */
         /*
             // direct_messages new
             let url = "https://api.twitter.com/1.1/direct_messages/events/new.json";

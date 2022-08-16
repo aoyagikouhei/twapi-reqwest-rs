@@ -15,6 +15,9 @@ Twitter OAuth library used by reqwest.
 
 ## Changes
 
+### v0.2.3 (2022/08/16)
+* support feature reqwest rustls-tls
+
 ### v0.2.2 (2021/09/14)
 * oauth parse_oauth_body check response is_success
 
