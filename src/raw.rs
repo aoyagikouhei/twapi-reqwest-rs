@@ -15,7 +15,10 @@ fn make_query(list: &Vec<(&str, &str)>, separator: &str) -> String {
 }
 
 fn build_client(timeout_sec: Option<Duration>) -> Client {
-    Client::builder().timeout(timeout_sec.unwrap_or(Duration::new(30, 0))).build().unwrap()
+    match timeout_sec {
+        Some(value) => Client::builder().timeout(value),
+        None => Client::builder()
+    }.build().unwrap()
 }
 pub(crate) async fn get(
     url: &str,
