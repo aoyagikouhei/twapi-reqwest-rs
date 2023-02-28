@@ -1,6 +1,6 @@
 [package]
 name = "twapi-reqwest"
-version = "0.2.3"
+version = "0.2.4"
 authors = ["aoyagikouhei <aoyagi.kouhei@gmail.com>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
