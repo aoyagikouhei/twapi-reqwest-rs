@@ -12,11 +12,11 @@ readme = "Readme.md"
 documentation = "https://docs.rs/twapi-reqwest"
 
 [dependencies]
-base64 = "^0.13"
-reqwest = { version = "^0.11", features = ["json", "multipart"], default-features = false, optional = true }
-serde_json = "^1.0"
-serde_urlencoded = "^0.7"
-twapi-oauth = "~0.1.4"
+base64 = "0.13"
+reqwest = { version = "0.11", features = ["json", "multipart"], default-features = false, optional = true }
+serde_json = "1.0"
+serde_urlencoded = "0.7"
+twapi-oauth = "0.1.4"
 #twapi-oauth = { path = "../twapi-oauth-rs" }
 
 [features]

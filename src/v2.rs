@@ -57,7 +57,14 @@ impl Client {
         query_options: &Vec<(&str, &str)>,
         form_options: &Vec<(&str, &str)>,
     ) -> Result<Response, Error> {
-        crate::raw::post(url, query_options, form_options, &self.make_header(), self.timeout_sec).await
+        crate::raw::post(
+            url,
+            query_options,
+            form_options,
+            &self.make_header(),
+            self.timeout_sec,
+        )
+        .await
     }
 
     pub async fn json(
@@ -66,7 +73,14 @@ impl Client {
         query_options: &Vec<(&str, &str)>,
         data: &Value,
     ) -> Result<Response, Error> {
-        crate::raw::json(url, query_options, data, &self.make_header(), self.timeout_sec).await
+        crate::raw::json(
+            url,
+            query_options,
+            data,
+            &self.make_header(),
+            self.timeout_sec,
+        )
+        .await
     }
 
     pub async fn put(
@@ -91,7 +105,14 @@ impl Client {
         query_options: &Vec<(&str, &str)>,
         data: Form,
     ) -> Result<Response, Error> {
-        crate::raw::multipart(url, query_options, data, &self.make_header(), self.timeout_sec).await
+        crate::raw::multipart(
+            url,
+            query_options,
+            data,
+            &self.make_header(),
+            self.timeout_sec,
+        )
+        .await
     }
 }
 
@@ -178,7 +199,7 @@ mod tests {
             "https://api.twitter.com/1.1/search/tweets.json",
             &vec![("q", "*abc"), ("count", "2")],
             &bearer_token,
-            None
+            None,
         )
         .await
         .unwrap()

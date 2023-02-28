@@ -1,7 +1,7 @@
 use reqwest::{multipart::Form, Error, Response};
 use serde_json::Value;
-use twapi_oauth::oauth1_authorization_header;
 use std::time::Duration;
+use twapi_oauth::oauth1_authorization_header;
 
 pub struct Client {
     consumer_key: String,
@@ -70,7 +70,14 @@ impl Client {
             merged_options.push(*option);
         }
         let authorization = self.calc_oauth("POST", url, &merged_options);
-        crate::raw::post(url, query_options, form_options, &authorization, self.timeout_sec).await
+        crate::raw::post(
+            url,
+            query_options,
+            form_options,
+            &authorization,
+            self.timeout_sec,
+        )
+        .await
     }
 
     pub async fn json(
@@ -121,7 +128,13 @@ pub async fn get(
     access_secret: &str,
     timeout_sec: Option<Duration>,
 ) -> Result<Response, Error> {
-    let client = Client::new(consumer_key, consumer_secret, access_key, access_secret, timeout_sec);
+    let client = Client::new(
+        consumer_key,
+        consumer_secret,
+        access_key,
+        access_secret,
+        timeout_sec,
+    );
     client.get(url, query_options).await
 }
 
@@ -135,7 +148,13 @@ pub async fn post(
     access_secret: &str,
     timeout_sec: Option<Duration>,
 ) -> Result<Response, Error> {
-    let client = Client::new(consumer_key, consumer_secret, access_key, access_secret, timeout_sec);
+    let client = Client::new(
+        consumer_key,
+        consumer_secret,
+        access_key,
+        access_secret,
+        timeout_sec,
+    );
     client.post(url, query_options, form_options).await
 }
 
@@ -149,7 +168,13 @@ pub async fn json(
     access_secret: &str,
     timeout_sec: Option<Duration>,
 ) -> Result<Response, Error> {
-    let client = Client::new(consumer_key, consumer_secret, access_key, access_secret, timeout_sec);
+    let client = Client::new(
+        consumer_key,
+        consumer_secret,
+        access_key,
+        access_secret,
+        timeout_sec,
+    );
     client.json(url, query_options, data).await
 }
 
@@ -162,7 +187,13 @@ pub async fn put(
     access_secret: &str,
     timeout_sec: Option<Duration>,
 ) -> Result<Response, Error> {
-    let client = Client::new(consumer_key, consumer_secret, access_key, access_secret, timeout_sec);
+    let client = Client::new(
+        consumer_key,
+        consumer_secret,
+        access_key,
+        access_secret,
+        timeout_sec,
+    );
     client.put(url, query_options).await
 }
 
@@ -175,7 +206,13 @@ pub async fn delete(
     access_secret: &str,
     timeout_sec: Option<Duration>,
 ) -> Result<Response, Error> {
-    let client = Client::new(consumer_key, consumer_secret, access_key, access_secret, timeout_sec);
+    let client = Client::new(
+        consumer_key,
+        consumer_secret,
+        access_key,
+        access_secret,
+        timeout_sec,
+    );
     client.delete(url, query_options).await
 }
 
@@ -189,7 +226,13 @@ pub async fn multipart(
     access_secret: &str,
     timeout_sec: Option<Duration>,
 ) -> Result<Response, Error> {
-    let client = Client::new(consumer_key, consumer_secret, access_key, access_secret, timeout_sec);
+    let client = Client::new(
+        consumer_key,
+        consumer_secret,
+        access_key,
+        access_secret,
+        timeout_sec,
+    );
     client.multipart(url, query_options, data).await
 }
 
@@ -216,7 +259,7 @@ mod tests {
             &consumer_secret,
             &access_key,
             &access_secret,
-            None
+            None,
         )
         .await
         .unwrap()
@@ -235,7 +278,7 @@ mod tests {
             &consumer_secret,
             &access_key,
             &access_secret,
-            None
+            None,
         )
         .await
         .unwrap()
