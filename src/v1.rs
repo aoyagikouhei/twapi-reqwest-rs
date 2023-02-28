@@ -8,6 +8,7 @@ pub struct Client {
     consumer_secret: String,
     access_key: String,
     access_secret: String,
+    timeout_sec: Option<Duration>,
 }
 
 impl Client {
@@ -16,12 +17,14 @@ impl Client {
         consumer_secret: &str,
         access_key: &str,
         access_secret: &str,
+        timeout_sec: Option<Duration>,
     ) -> Self {
         Self {
             consumer_key: consumer_key.to_owned(),
             consumer_secret: consumer_secret.to_owned(),
             access_key: access_key.to_owned(),
             access_secret: access_secret.to_owned(),
+            timeout_sec,
         }
     }
 
@@ -31,6 +34,7 @@ impl Client {
             consumer_secret: std::env::var("CONSUMER_SECRET")?,
             access_key: std::env::var("ACCESS_KEY")?,
             access_secret: std::env::var("ACCESS_SECRET")?,
+            timeout_sec: None,
         })
     }
 
@@ -50,10 +54,9 @@ impl Client {
         &self,
         url: &str,
         query_options: &Vec<(&str, &str)>,
-        timeout_sec: Option<Duration>,
     ) -> Result<Response, Error> {
         let authorization = self.calc_oauth("GET", url, &query_options);
-        crate::raw::get(url, query_options, &authorization, timeout_sec).await
+        crate::raw::get(url, query_options, &authorization, self.timeout_sec).await
     }
 
     pub async fn post(
@@ -61,14 +64,13 @@ impl Client {
         url: &str,
         query_options: &Vec<(&str, &str)>,
         form_options: &Vec<(&str, &str)>,
-        timeout_sec: Option<Duration>,
     ) -> Result<Response, Error> {
         let mut merged_options = query_options.clone();
         for option in form_options {
             merged_options.push(*option);
         }
         let authorization = self.calc_oauth("POST", url, &merged_options);
-        crate::raw::post(url, query_options, form_options, &authorization, timeout_sec).await
+        crate::raw::post(url, query_options, form_options, &authorization, self.timeout_sec).await
     }
 
     pub async fn json(
@@ -76,30 +78,27 @@ impl Client {
         url: &str,
         query_options: &Vec<(&str, &str)>,
         data: &Value,
-        timeout_sec: Option<Duration>,
     ) -> Result<Response, Error> {
         let authorization = self.calc_oauth("POST", url, &query_options);
-        crate::raw::json(url, query_options, data, &authorization, timeout_sec).await
+        crate::raw::json(url, query_options, data, &authorization, self.timeout_sec).await
     }
 
     pub async fn put(
         &self,
         url: &str,
         query_options: &Vec<(&str, &str)>,
-        timeout_sec: Option<Duration>,
     ) -> Result<Response, Error> {
         let authorization = self.calc_oauth("PUT", url, &query_options);
-        crate::raw::put(url, query_options, &authorization, timeout_sec).await
+        crate::raw::put(url, query_options, &authorization, self.timeout_sec).await
     }
 
     pub async fn delete(
         &self,
         url: &str,
         query_options: &Vec<(&str, &str)>,
-        timeout_sec: Option<Duration>,
     ) -> Result<Response, Error> {
         let authorization = self.calc_oauth("DELETE", url, &query_options);
-        crate::raw::delete(url, query_options, &authorization, timeout_sec).await
+        crate::raw::delete(url, query_options, &authorization, self.timeout_sec).await
     }
 
     pub async fn multipart(
@@ -107,10 +106,9 @@ impl Client {
         url: &str,
         query_options: &Vec<(&str, &str)>,
         data: Form,
-        timeout_sec: Option<Duration>,
     ) -> Result<Response, Error> {
         let authorization = self.calc_oauth("POST", url, &query_options);
-        crate::raw::multipart(url, query_options, data, &authorization, timeout_sec).await
+        crate::raw::multipart(url, query_options, data, &authorization, self.timeout_sec).await
     }
 }
 
@@ -123,8 +121,8 @@ pub async fn get(
     access_secret: &str,
     timeout_sec: Option<Duration>,
 ) -> Result<Response, Error> {
-    let client = Client::new(consumer_key, consumer_secret, access_key, access_secret);
-    client.get(url, query_options, timeout_sec).await
+    let client = Client::new(consumer_key, consumer_secret, access_key, access_secret, timeout_sec);
+    client.get(url, query_options).await
 }
 
 pub async fn post(
@@ -137,8 +135,8 @@ pub async fn post(
     access_secret: &str,
     timeout_sec: Option<Duration>,
 ) -> Result<Response, Error> {
-    let client = Client::new(consumer_key, consumer_secret, access_key, access_secret);
-    client.post(url, query_options, form_options, timeout_sec).await
+    let client = Client::new(consumer_key, consumer_secret, access_key, access_secret, timeout_sec);
+    client.post(url, query_options, form_options).await
 }
 
 pub async fn json(
@@ -151,8 +149,8 @@ pub async fn json(
     access_secret: &str,
     timeout_sec: Option<Duration>,
 ) -> Result<Response, Error> {
-    let client = Client::new(consumer_key, consumer_secret, access_key, access_secret);
-    client.json(url, query_options, data, timeout_sec).await
+    let client = Client::new(consumer_key, consumer_secret, access_key, access_secret, timeout_sec);
+    client.json(url, query_options, data).await
 }
 
 pub async fn put(
@@ -164,8 +162,8 @@ pub async fn put(
     access_secret: &str,
     timeout_sec: Option<Duration>,
 ) -> Result<Response, Error> {
-    let client = Client::new(consumer_key, consumer_secret, access_key, access_secret);
-    client.put(url, query_options, timeout_sec).await
+    let client = Client::new(consumer_key, consumer_secret, access_key, access_secret, timeout_sec);
+    client.put(url, query_options).await
 }
 
 pub async fn delete(
@@ -177,8 +175,8 @@ pub async fn delete(
     access_secret: &str,
     timeout_sec: Option<Duration>,
 ) -> Result<Response, Error> {
-    let client = Client::new(consumer_key, consumer_secret, access_key, access_secret);
-    client.delete(url, query_options, timeout_sec).await
+    let client = Client::new(consumer_key, consumer_secret, access_key, access_secret, timeout_sec);
+    client.delete(url, query_options).await
 }
 
 pub async fn multipart(
@@ -191,8 +189,8 @@ pub async fn multipart(
     access_secret: &str,
     timeout_sec: Option<Duration>,
 ) -> Result<Response, Error> {
-    let client = Client::new(consumer_key, consumer_secret, access_key, access_secret);
-    client.multipart(url, query_options, data, timeout_sec).await
+    let client = Client::new(consumer_key, consumer_secret, access_key, access_secret, timeout_sec);
+    client.multipart(url, query_options, data).await
 }
 
 #[cfg(test)]
