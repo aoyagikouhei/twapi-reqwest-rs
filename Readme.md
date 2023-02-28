@@ -16,7 +16,7 @@ Twitter OAuth library used by reqwest.
 ## Changes
 
 ### v0.3.0 (2023/02/28)
-* add timeout setting
+* add timeout setting(default timeout is 30secs)
 
 ### v0.2.3 (2022/08/16)
 * support feature reqwest rustls-tls
