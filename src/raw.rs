@@ -1,6 +1,7 @@
 use reqwest::{multipart::Form, Client, Error, Response};
 use serde_json::Value;
 use twapi_oauth::encode;
+use std::time::Duration;
 
 fn make_query(list: &Vec<(&str, &str)>, separator: &str) -> String {
     let mut result = String::from("");
@@ -13,17 +14,24 @@ fn make_query(list: &Vec<(&str, &str)>, separator: &str) -> String {
     result
 }
 
+fn build_client(timeout_sec: Option<Duration>) -> Client {
+    match timeout_sec {
+        Some(value) => Client::builder().timeout(value),
+        None => Client::builder()
+    }.build().unwrap()
+}
 pub(crate) async fn get(
     url: &str,
     query_options: &Vec<(&str, &str)>,
     authorization: &str,
+    timeout_sec: Option<Duration>,
 ) -> Result<Response, Error> {
     let url = if query_options.len() > 0 {
         format!("{}?{}", url, make_query(query_options, "&"))
     } else {
         url.to_owned()
     };
-    let client = Client::new();
+    let client = build_client(timeout_sec);
     client
         .get(&url)
         .header("Authorization", authorization)
@@ -36,8 +44,9 @@ pub(crate) async fn post(
     query_options: &Vec<(&str, &str)>,
     form_options: &Vec<(&str, &str)>,
     authorization: &str,
+    timeout_sec: Option<Duration>,
 ) -> Result<Response, Error> {
-    let client = Client::new();
+    let client = build_client(timeout_sec);
     client
         .post(url)
         .header("Authorization", authorization)
@@ -56,8 +65,9 @@ pub(crate) async fn json(
     query_options: &Vec<(&str, &str)>,
     data: &Value,
     authorization: &str,
+    timeout_sec: Option<Duration>,
 ) -> Result<Response, Error> {
-    let client = Client::new();
+    let client = build_client(timeout_sec);
     client
         .post(url)
         .header("Authorization", authorization)
@@ -72,8 +82,9 @@ pub(crate) async fn put(
     url: &str,
     query_options: &Vec<(&str, &str)>,
     authorization: &str,
+    timeout_sec: Option<Duration>,
 ) -> Result<Response, Error> {
-    let client = Client::new();
+    let client = build_client(timeout_sec);
     client
         .put(url)
         .header("Authorization", authorization)
@@ -86,8 +97,9 @@ pub(crate) async fn delete(
     url: &str,
     query_options: &Vec<(&str, &str)>,
     authorization: &str,
+    timeout_sec: Option<Duration>,
 ) -> Result<Response, Error> {
-    let client = Client::new();
+    let client = build_client(timeout_sec);
     client
         .delete(url)
         .header("Authorization", authorization)
@@ -101,8 +113,9 @@ pub(crate) async fn multipart(
     query_options: &Vec<(&str, &str)>,
     data: Form,
     authorization: &str,
+    timeout_sec: Option<Duration>,
 ) -> Result<Response, Error> {
-    let client = Client::new();
+    let client = build_client(timeout_sec);
     client
         .post(url)
         .header("Authorization", authorization)

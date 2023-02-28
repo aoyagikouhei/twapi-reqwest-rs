@@ -1,15 +1,18 @@
 use reqwest::{multipart::Form, Error, Response};
 use serde_json::Value;
+use std::time::Duration;
 use twapi_oauth::oauth2_authorization_header;
 
 pub struct Client {
     bearer_token: String,
+    timeout_sec: Option<Duration>,
 }
 
 impl Client {
-    pub fn new(bearer_token: &str) -> Self {
+    pub fn new(bearer_token: &str, timeout_sec: Option<Duration>) -> Self {
         Self {
             bearer_token: bearer_token.to_owned(),
+            timeout_sec,
         }
     }
 
@@ -20,7 +23,7 @@ impl Client {
         Ok(
             crate::oauth::get_bearer_token(&consumer_key, &consumer_secret)
                 .await?
-                .map(|bearer_token| Self::new(&bearer_token)),
+                .map(|bearer_token| Self::new(&bearer_token, None)),
         )
     }
 
@@ -45,7 +48,7 @@ impl Client {
         url: &str,
         query_options: &Vec<(&str, &str)>,
     ) -> Result<Response, Error> {
-        crate::raw::get(url, query_options, &self.make_header()).await
+        crate::raw::get(url, query_options, &self.make_header(), self.timeout_sec).await
     }
 
     pub async fn post(
@@ -54,7 +57,7 @@ impl Client {
         query_options: &Vec<(&str, &str)>,
         form_options: &Vec<(&str, &str)>,
     ) -> Result<Response, Error> {
-        crate::raw::post(url, query_options, form_options, &self.make_header()).await
+        crate::raw::post(url, query_options, form_options, &self.make_header(), self.timeout_sec).await
     }
 
     pub async fn json(
@@ -63,7 +66,7 @@ impl Client {
         query_options: &Vec<(&str, &str)>,
         data: &Value,
     ) -> Result<Response, Error> {
-        crate::raw::json(url, query_options, data, &self.make_header()).await
+        crate::raw::json(url, query_options, data, &self.make_header(), self.timeout_sec).await
     }
 
     pub async fn put(
@@ -71,7 +74,7 @@ impl Client {
         url: &str,
         query_options: &Vec<(&str, &str)>,
     ) -> Result<Response, Error> {
-        crate::raw::put(url, query_options, &self.make_header()).await
+        crate::raw::put(url, query_options, &self.make_header(), self.timeout_sec).await
     }
 
     pub async fn delete(
@@ -79,7 +82,7 @@ impl Client {
         url: &str,
         query_options: &Vec<(&str, &str)>,
     ) -> Result<Response, Error> {
-        crate::raw::delete(url, query_options, &self.make_header()).await
+        crate::raw::delete(url, query_options, &self.make_header(), self.timeout_sec).await
     }
 
     pub async fn multipart(
@@ -88,7 +91,7 @@ impl Client {
         query_options: &Vec<(&str, &str)>,
         data: Form,
     ) -> Result<Response, Error> {
-        crate::raw::multipart(url, query_options, data, &self.make_header()).await
+        crate::raw::multipart(url, query_options, data, &self.make_header(), self.timeout_sec).await
     }
 }
 
@@ -96,8 +99,9 @@ pub async fn get(
     url: &str,
     query_options: &Vec<(&str, &str)>,
     bearer_token: &str,
+    timeout_sec: Option<Duration>,
 ) -> Result<Response, Error> {
-    let client = Client::new(bearer_token);
+    let client = Client::new(bearer_token, timeout_sec);
     client.get(url, query_options).await
 }
 
@@ -106,8 +110,9 @@ pub async fn post(
     query_options: &Vec<(&str, &str)>,
     form_options: &Vec<(&str, &str)>,
     bearer_token: &str,
+    timeout_sec: Option<Duration>,
 ) -> Result<Response, Error> {
-    let client = Client::new(bearer_token);
+    let client = Client::new(bearer_token, timeout_sec);
     client.post(url, query_options, form_options).await
 }
 
@@ -116,8 +121,9 @@ pub async fn json(
     query_options: &Vec<(&str, &str)>,
     data: &Value,
     bearer_token: &str,
+    timeout_sec: Option<Duration>,
 ) -> Result<Response, Error> {
-    let client = Client::new(bearer_token);
+    let client = Client::new(bearer_token, timeout_sec);
     client.json(url, query_options, data).await
 }
 
@@ -125,8 +131,9 @@ pub async fn put(
     url: &str,
     query_options: &Vec<(&str, &str)>,
     bearer_token: &str,
+    timeout_sec: Option<Duration>,
 ) -> Result<Response, Error> {
-    let client = Client::new(bearer_token);
+    let client = Client::new(bearer_token, timeout_sec);
     client.put(url, query_options).await
 }
 
@@ -134,8 +141,9 @@ pub async fn delete(
     url: &str,
     query_options: &Vec<(&str, &str)>,
     bearer_token: &str,
+    timeout_sec: Option<Duration>,
 ) -> Result<Response, Error> {
-    let client = Client::new(bearer_token);
+    let client = Client::new(bearer_token, timeout_sec);
     client.delete(url, query_options).await
 }
 
@@ -144,8 +152,9 @@ pub async fn multipart(
     query_options: &Vec<(&str, &str)>,
     data: Form,
     bearer_token: &str,
+    timeout_sec: Option<Duration>,
 ) -> Result<Response, Error> {
-    let client = Client::new(bearer_token);
+    let client = Client::new(bearer_token, timeout_sec);
     client.multipart(url, query_options, data).await
 }
 
@@ -169,6 +178,7 @@ mod tests {
             "https://api.twitter.com/1.1/search/tweets.json",
             &vec![("q", "*abc"), ("count", "2")],
             &bearer_token,
+            None
         )
         .await
         .unwrap()

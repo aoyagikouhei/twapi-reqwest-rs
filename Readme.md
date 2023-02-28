@@ -15,6 +15,9 @@ Twitter OAuth library used by reqwest.
 
 ## Changes
 
+### v0.3.0 (2023/02/28)
+* add timeout setting
+
 ### v0.2.3 (2022/08/16)
 * support feature reqwest rustls-tls
 
@@ -46,6 +49,7 @@ async fn main() {
         "https://api.twitter.com/1.1/search/tweets.json",
         &vec![("q", "東京&埼玉"), ("count", "2")],
         &bearer_token,
+        None,
     )
     .await
     .unwrap()
@@ -70,6 +74,7 @@ async fn main() {
         &consumer_secret,
         &access_key,
         &access_secret,
+        None,
     )
     .await
     .unwrap()
@@ -92,6 +97,7 @@ async fn main() {
         &consumer_secret,
         &access_key,
         &access_secret,
+        None,
     )
     .await
     .unwrap()
@@ -124,6 +130,7 @@ async fn main() {
         &consumer_secret,
         &access_key,
         &access_secret,
+        None,
     )
     .await
     .unwrap()
@@ -151,6 +158,7 @@ async fn main() {
         &consumer_secret,
         &access_key,
         &access_secret,
+        None,
     )
     .await
     .unwrap()

@@ -1,12 +1,14 @@
 use reqwest::{multipart::Form, Error, Response};
 use serde_json::Value;
 use twapi_oauth::oauth1_authorization_header;
+use std::time::Duration;
 
 pub struct Client {
     consumer_key: String,
     consumer_secret: String,
     access_key: String,
     access_secret: String,
+    timeout_sec: Option<Duration>,
 }
 
 impl Client {
@@ -15,12 +17,14 @@ impl Client {
         consumer_secret: &str,
         access_key: &str,
         access_secret: &str,
+        timeout_sec: Option<Duration>,
     ) -> Self {
         Self {
             consumer_key: consumer_key.to_owned(),
             consumer_secret: consumer_secret.to_owned(),
             access_key: access_key.to_owned(),
             access_secret: access_secret.to_owned(),
+            timeout_sec,
         }
     }
 
@@ -30,6 +34,7 @@ impl Client {
             consumer_secret: std::env::var("CONSUMER_SECRET")?,
             access_key: std::env::var("ACCESS_KEY")?,
             access_secret: std::env::var("ACCESS_SECRET")?,
+            timeout_sec: None,
         })
     }
 
@@ -51,7 +56,7 @@ impl Client {
         query_options: &Vec<(&str, &str)>,
     ) -> Result<Response, Error> {
         let authorization = self.calc_oauth("GET", url, &query_options);
-        crate::raw::get(url, query_options, &authorization).await
+        crate::raw::get(url, query_options, &authorization, self.timeout_sec).await
     }
 
     pub async fn post(
@@ -65,7 +70,7 @@ impl Client {
             merged_options.push(*option);
         }
         let authorization = self.calc_oauth("POST", url, &merged_options);
-        crate::raw::post(url, query_options, form_options, &authorization).await
+        crate::raw::post(url, query_options, form_options, &authorization, self.timeout_sec).await
     }
 
     pub async fn json(
@@ -75,7 +80,7 @@ impl Client {
         data: &Value,
     ) -> Result<Response, Error> {
         let authorization = self.calc_oauth("POST", url, &query_options);
-        crate::raw::json(url, query_options, data, &authorization).await
+        crate::raw::json(url, query_options, data, &authorization, self.timeout_sec).await
     }
 
     pub async fn put(
@@ -84,7 +89,7 @@ impl Client {
         query_options: &Vec<(&str, &str)>,
     ) -> Result<Response, Error> {
         let authorization = self.calc_oauth("PUT", url, &query_options);
-        crate::raw::put(url, query_options, &authorization).await
+        crate::raw::put(url, query_options, &authorization, self.timeout_sec).await
     }
 
     pub async fn delete(
@@ -93,7 +98,7 @@ impl Client {
         query_options: &Vec<(&str, &str)>,
     ) -> Result<Response, Error> {
         let authorization = self.calc_oauth("DELETE", url, &query_options);
-        crate::raw::delete(url, query_options, &authorization).await
+        crate::raw::delete(url, query_options, &authorization, self.timeout_sec).await
     }
 
     pub async fn multipart(
@@ -103,7 +108,7 @@ impl Client {
         data: Form,
     ) -> Result<Response, Error> {
         let authorization = self.calc_oauth("POST", url, &query_options);
-        crate::raw::multipart(url, query_options, data, &authorization).await
+        crate::raw::multipart(url, query_options, data, &authorization, self.timeout_sec).await
     }
 }
 
@@ -114,8 +119,9 @@ pub async fn get(
     consumer_secret: &str,
     access_key: &str,
     access_secret: &str,
+    timeout_sec: Option<Duration>,
 ) -> Result<Response, Error> {
-    let client = Client::new(consumer_key, consumer_secret, access_key, access_secret);
+    let client = Client::new(consumer_key, consumer_secret, access_key, access_secret, timeout_sec);
     client.get(url, query_options).await
 }
 
@@ -127,8 +133,9 @@ pub async fn post(
     consumer_secret: &str,
     access_key: &str,
     access_secret: &str,
+    timeout_sec: Option<Duration>,
 ) -> Result<Response, Error> {
-    let client = Client::new(consumer_key, consumer_secret, access_key, access_secret);
+    let client = Client::new(consumer_key, consumer_secret, access_key, access_secret, timeout_sec);
     client.post(url, query_options, form_options).await
 }
 
@@ -140,8 +147,9 @@ pub async fn json(
     consumer_secret: &str,
     access_key: &str,
     access_secret: &str,
+    timeout_sec: Option<Duration>,
 ) -> Result<Response, Error> {
-    let client = Client::new(consumer_key, consumer_secret, access_key, access_secret);
+    let client = Client::new(consumer_key, consumer_secret, access_key, access_secret, timeout_sec);
     client.json(url, query_options, data).await
 }
 
@@ -152,8 +160,9 @@ pub async fn put(
     consumer_secret: &str,
     access_key: &str,
     access_secret: &str,
+    timeout_sec: Option<Duration>,
 ) -> Result<Response, Error> {
-    let client = Client::new(consumer_key, consumer_secret, access_key, access_secret);
+    let client = Client::new(consumer_key, consumer_secret, access_key, access_secret, timeout_sec);
     client.put(url, query_options).await
 }
 
@@ -164,8 +173,9 @@ pub async fn delete(
     consumer_secret: &str,
     access_key: &str,
     access_secret: &str,
+    timeout_sec: Option<Duration>,
 ) -> Result<Response, Error> {
-    let client = Client::new(consumer_key, consumer_secret, access_key, access_secret);
+    let client = Client::new(consumer_key, consumer_secret, access_key, access_secret, timeout_sec);
     client.delete(url, query_options).await
 }
 
@@ -177,8 +187,9 @@ pub async fn multipart(
     consumer_secret: &str,
     access_key: &str,
     access_secret: &str,
+    timeout_sec: Option<Duration>,
 ) -> Result<Response, Error> {
-    let client = Client::new(consumer_key, consumer_secret, access_key, access_secret);
+    let client = Client::new(consumer_key, consumer_secret, access_key, access_secret, timeout_sec);
     client.multipart(url, query_options, data).await
 }
 
@@ -205,6 +216,7 @@ mod tests {
             &consumer_secret,
             &access_key,
             &access_secret,
+            None
         )
         .await
         .unwrap()
@@ -223,6 +235,7 @@ mod tests {
             &consumer_secret,
             &access_key,
             &access_secret,
+            None
         )
         .await
         .unwrap()
