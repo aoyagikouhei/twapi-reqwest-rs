@@ -1,7 +1,9 @@
-use reqwest::{multipart::Form, Client, Error, Response};
+use reqwest::{multipart::Form, Error, Response};
 use serde_json::Value;
 use std::time::Duration;
 use twapi_oauth::encode;
+
+use crate::build_client;
 
 fn make_query(list: &Vec<(&str, &str)>, separator: &str) -> String {
     let mut result = String::from("");
@@ -12,15 +14,6 @@ fn make_query(list: &Vec<(&str, &str)>, separator: &str) -> String {
         result.push_str(&format!("{}={}", item.0, encode(item.1)));
     }
     result
-}
-
-fn build_client(timeout_sec: Option<Duration>) -> Client {
-    match timeout_sec {
-        Some(value) => Client::builder().timeout(value),
-        None => Client::builder(),
-    }
-    .build()
-    .unwrap()
 }
 pub(crate) async fn get(
     url: &str,

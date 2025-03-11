@@ -19,15 +19,16 @@ impl Client {
     pub async fn new_from_key(
         consumer_key: &str,
         consumer_secret: &str,
+        timeout_sec: Option<Duration>,
     ) -> Result<Option<Self>, Error> {
         Ok(
-            crate::oauth::get_bearer_token(&consumer_key, &consumer_secret)
+            crate::oauth::get_bearer_token(&consumer_key, &consumer_secret, timeout_sec)
                 .await?
                 .map(|bearer_token| Self::new(&bearer_token, None)),
         )
     }
 
-    pub async fn new_by_env() -> Result<Option<Self>, Error> {
+    pub async fn new_by_env(timeout_sec: Option<Duration>) -> Result<Option<Self>, Error> {
         let consumer_key = match std::env::var("CONSUMER_KEY") {
             Ok(consumer_key) => consumer_key,
             Err(_) => return Ok(None),
@@ -36,7 +37,7 @@ impl Client {
             Ok(consumer_key) => consumer_key,
             Err(_) => return Ok(None),
         };
-        Self::new_from_key(&consumer_key, &consumer_secret).await
+        Self::new_from_key(&consumer_key, &consumer_secret, timeout_sec).await
     }
 
     fn make_header(&self) -> String {
@@ -189,7 +190,7 @@ mod tests {
     async fn test_api() {
         let consumer_key = env::var("CONSUMER_KEY").unwrap();
         let consumer_secret = env::var("CONSUMER_SECRET").unwrap();
-        let bearer_token = oauth::get_bearer_token(&consumer_key, &consumer_secret)
+        let bearer_token = oauth::get_bearer_token(&consumer_key, &consumer_secret, None)
             .await
             .unwrap()
             .unwrap();
