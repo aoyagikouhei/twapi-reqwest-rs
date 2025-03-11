@@ -1,14 +1,18 @@
-use reqwest::{Client, Error, Response};
+use reqwest::{Error, Response};
 use serde_json::Value;
 use std::collections::HashMap;
+use std::time::Duration;
 use twapi_oauth::calc_oauth_header;
+
+use crate::build_client;
 
 pub async fn get_bearer_token_response(
     consumer_key: &str,
     consumer_secret: &str,
+    timeout_sec: Option<Duration>,
 ) -> Result<Response, Error> {
     let key = base64::encode(&format!("{}:{}", consumer_key, consumer_secret));
-    let client = Client::new();
+    let client = build_client(timeout_sec);
     client
         .post("https://api.twitter.com/oauth2/token")
         .header(
@@ -24,8 +28,9 @@ pub async fn get_bearer_token_response(
 pub async fn get_bearer_token(
     consumer_key: &str,
     consumer_secret: &str,
+    timeout_sec: Option<Duration>,
 ) -> Result<Option<String>, Error> {
-    let json: Value = get_bearer_token_response(consumer_key, consumer_secret)
+    let json: Value = get_bearer_token_response(consumer_key, consumer_secret, timeout_sec)
         .await?
         .json()
         .await?;
@@ -40,6 +45,7 @@ pub async fn request_token_response(
     consumer_secret: &str,
     oauth_callback: &str,
     x_auth_access_type: Option<&str>,
+    timeout_sec: Option<Duration>,
 ) -> Result<Response, Error> {
     let uri = "https://api.twitter.com/oauth/request_token";
     let mut header_options = vec![("oauth_callback", oauth_callback)];
@@ -54,7 +60,7 @@ pub async fn request_token_response(
         uri,
         &vec![],
     );
-    let client = Client::new();
+    let client = build_client(timeout_sec);
     client
         .post(uri)
         .header("Authorization", &format!("OAuth {}", signed))
@@ -67,12 +73,14 @@ pub async fn request_token(
     consumer_secret: &str,
     oauth_callback: &str,
     x_auth_access_type: Option<&str>,
+    timeout_sec: Option<Duration>,
 ) -> Result<HashMap<String, String>, Error> {
     let response = request_token_response(
         consumer_key,
         consumer_secret,
         oauth_callback,
         x_auth_access_type,
+        timeout_sec,
     )
     .await?;
     Ok(parse_oauth_body(response).await)
@@ -84,6 +92,7 @@ pub async fn access_token_response(
     oauth_token: &str,
     oauth_token_secret: &str,
     oauth_verifier: &str,
+    timeout_sec: Option<Duration>,
 ) -> Result<Response, Error> {
     let uri = "https://api.twitter.com/oauth/access_token";
     let signed = calc_oauth_header(
@@ -97,7 +106,7 @@ pub async fn access_token_response(
         uri,
         &vec![],
     );
-    let client = Client::new();
+    let client = build_client(timeout_sec);
     client
         .post(uri)
         .header("Authorization", &format!("OAuth {}", signed))
@@ -111,6 +120,7 @@ pub async fn access_token(
     oauth_token: &str,
     oauth_token_secret: &str,
     oauth_verifier: &str,
+    timeout_sec: Option<Duration>,
 ) -> Result<HashMap<String, String>, Error> {
     let response = access_token_response(
         consumer_key,
@@ -118,6 +128,7 @@ pub async fn access_token(
         oauth_token,
         oauth_token_secret,
         oauth_verifier,
+        timeout_sec,
     )
     .await?;
     Ok(parse_oauth_body(response).await)
